@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Automator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        .log-entry:hover {
+            background-color: #f3f4f6;
+            transform: translateY(-1px);
+        }
+        .platform-icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10">
+            <h1 class="text-3xl font-bold text-indigo-700">Job Application Automator</h1>
+            <p class="text-gray-600 mt-2">Automate your job search and apply to up to 50 jobs daily</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Configuration -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Resume Management -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-file-pdf mr-2 text-red-500"></i> Resume Management
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <input type="file" id="resumeUpload" accept=".pdf" class="hidden">
+                            <label for="resumeUpload" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-indigo-400 mb-2"></i>
+                                <p class="text-gray-600">Click to upload your resume (PDF)</p>
+                                <p class="text-xs text-gray-400 mt-1">Max file size: 5MB</p>
+                            </label>
+                        </div>
+                        <div id="resumeStatus" class="hidden text-center p-2 rounded bg-green-50 text-green-700">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            <span>Resume uploaded successfully!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Targeting & Criteria -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-bullseye mr-2 text-blue-500"></i> Targeting & Criteria
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="jobTitles" class="block text-sm font-medium text-gray-700 mb-1">Job Titles</label>
+                            <input type="text" id="jobTitles" placeholder="e.g. Software Engineer, Frontend Developer" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="keywords" class="block text-sm font-medium text-gray-700 mb-1">Keywords</label>
+                            <input type="text" id="keywords" placeholder="e.g. React, JavaScript, Remote" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="locations" class="block text-sm font-medium text-gray-700 mb-1">Locations</label>
+                            <input type="text" id="locations" placeholder="e.g. Remote, Mexico City, Guadalajara" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Platforms -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-globe mr-2 text-purple-500"></i> Job Platforms
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="linkedin" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="linkedin" class="ml-2 block text-sm text-gray-700 flex items-center">
+                                <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" class="platform-icon"> LinkedIn
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="indeed" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="indeed" class="ml-2 block text-sm text-gray-700 flex items-center">
+                                <img src="https://cdn-icons-png.flaticon.com/512/732/732246.png" class="platform-icon"> Indeed
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="glassdoor" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="glassdoor" class="ml-2 block text-sm text-gray-700 flex items-center">
+                                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111435.png" class="platform-icon"> Glassdoor
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="occmundial" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="occmundial" class="ml-2 block text-sm text-gray-700 flex items-center">
+                                <img src="https://www.occmundial.com/favicon.ico" class="platform-icon"> Occmundial
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="computrabajo" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="computrabajo" class="ml-2 block text-sm text-gray-700 flex items-center">
+                                <img src="https://www.computrabajo.com/favicon.ico" class="platform-icon"> Computrabajo
+                            </label>
+                        </div>
+                        <div class="mt-4">
+                            <label for="customPlatforms" class="block text-sm font-medium text-gray-700 mb-1">Custom Platforms (URLs, one per line)</label>
+                            <textarea id="customPlatforms" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Dashboard -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Automation Controls -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-robot mr-2 text-yellow-500"></i> Automation Controls
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex flex-wrap gap-4">
+                            <button id="startBtn" class="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center">
+                                <i class="fas fa-play mr-2"></i> Start Automation
+                            </button>
+                            <button id="stopBtn" disabled class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center">
+                                <i class="fas fa-stop mr-2"></i> Stop Automation
+                            </button>
+                            <button id="scheduleBtn" class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center">
+                                <i class="fas fa-clock mr-2"></i> Schedule Daily
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium text-gray-700">Daily Progress</span>
+                                <span id="progressText" class="text-sm font-medium text-gray-700">0/50 applications</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progressBar" class="progress-bar bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="statusDisplay" class="mt-4 p-3 rounded-md bg-blue-50 text-blue-800 flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span>Ready to start. Configure your settings above.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Log -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <i class="fas fa-clipboard-list mr-2 text-indigo-500"></i> Application Log
+                        </h2>
+                        <button id="exportBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center">
+                            <i class="fas fa-file-excel mr-2"></i> Export to Excel
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Sample log entry -->
+                                <tr class="log-entry">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No applications yet</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                                <i class="fas fa-check-circle text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Successful</p>
+                                <p id="successCount" class="text-2xl font-semibold text-gray-800">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-red-100 text-red-600 mr-4">
+                                <i class="fas fa-times-circle text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Failed</p>
+                                <p id="failedCount" class="text-2xl font-semibold text-gray-800">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                                <i class="fas fa-bolt text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">Today's Goal</p>
+                                <p class="text-2xl font-semibold text-gray-800">50</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div id="scheduleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Schedule Daily Automation</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input type="time" id="scheduleTime" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" value="09:00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Daily Target</label>
+                    <input type="number" id="dailyTarget" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" value="50">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="enableNotifications" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="enableNotifications" class="ml-2 block text-sm text-gray-700">Enable email notifications</label>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancelSchedule" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Cancel
+                </button>
+                <button id="confirmSchedule" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    Confirm Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const resumeUpload = document.getElementById('resumeUpload');
+        const resumeStatus = document.getElementById('resumeStatus');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const scheduleBtn = document.getElementById('scheduleBtn');
+        const progressText = document.getElementById('progressText');
+        const progressBar = document.getElementById('progressBar');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const logTableBody = document.getElementById('logTableBody');
+        const exportBtn = document.getElementById('exportBtn');
+        const successCount = document.getElementById('successCount');
+        const failedCount = document.getElementById('failedCount');
+        const scheduleModal = document.getElementById('scheduleModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelSchedule = document.getElementById('cancelSchedule');
+        const confirmSchedule = document.getElementById('confirmSchedule');
+
+        // Application state
+        let isRunning = false;
+        let applications = [];
+        let successfulApplications = 0;
+        let failedApplications = 0;
+        let dailyGoal = 50;
+        let currentApplications = 0;
+        let automationInterval;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved data from localStorage
+            loadSavedData();
+            updateUI();
+        });
+
+        // Event Listeners
+        resumeUpload.addEventListener('change', handleResumeUpload);
+        startBtn.addEventListener('click', startAutomation);
+        stopBtn.addEventListener('click', stopAutomation);
+        scheduleBtn.addEventListener('click', showScheduleModal);
+        exportBtn.addEventListener('click', exportToExcel);
+        closeModal.addEventListener('click', hideScheduleModal);
+        cancelSchedule.addEventListener('click', hideScheduleModal);
+        confirmSchedule.addEventListener('click', confirmDailySchedule);
+
+        // Functions
+        function handleResumeUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                // In a real app, you would upload to a server here
+                // For demo purposes, we'll just simulate success
+                setTimeout(() => {
+                    resumeStatus.classList.remove('hidden');
+                    saveData('resume', file.name);
+                }, 1000);
+            } else {
+                alert('Please upload a PDF file');
+            }
+        }
+
+        function startAutomation() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            statusDisplay.innerHTML = '<i class="fas fa-sync-alt mr-2 pulse"></i><span>Automation running...</span>';
+            statusDisplay.className = 'mt-4 p-3 rounded-md bg-blue-100 text-blue-800 flex items-center';
+            
+            // Simulate automation - in a real app this would use Puppeteer/Selenium
+            automationInterval = setInterval(() => {
+                if (currentApplications >= dailyGoal) {
+                    stopAutomation();
+                    statusDisplay.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span>Daily goal reached!</span>';
+                    statusDisplay.className = 'mt-4 p-3 rounded-md bg-green-100 text-green-800 flex items-center';
+                    return;
+                }
+                
+                // Simulate applying to a job
+                const platforms = ['LinkedIn', 'Indeed', 'Glassdoor', 'Occmundial', 'Computrabajo'];
+                const statuses = ['Applied', 'Failed'];
+                const randomPlatform = platforms[Math.floor(Math.random() * platforms.length)];
+                const randomStatus = statuses[Math.floor(Math.random() * 2)];
+                const randomCompany = `Company ${Math.floor(Math.random() * 1000)}`;
+                
+                // Get current Mexico City time
+                const now = new Date();
+                const options = { 
+                    timeZone: 'America/Mexico_City',
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                const mexicoTime = now.toLocaleString('en-US', options);
+                
+                // Add to applications
+                const application = {
+                    dateTime: mexicoTime,
+                    company: randomCompany,
+                    platform: randomPlatform,
+                    status: randomStatus
+                };
+                
+                applications.unshift(application);
+                currentApplications++;
+                
+                if (randomStatus === 'Applied') {
+                    successfulApplications++;
+                } else {
+                    failedApplications++;
+                }
+                
+                // Save and update UI
+                saveData('applications', applications);
+                saveData('stats', {
+                    successful: successfulApplications,
+                    failed: failedApplications,
+                    current: currentApplications
+                });
+                updateUI();
+                
+            }, 2000); // Simulate 2 seconds per application
+        }
+
+        function stopAutomation() {
+            clearInterval(automationInterval);
+            isRunning = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusDisplay.innerHTML = '<i class="fas fa-pause-circle mr-2"></i><span>Automation paused</span>';
+            statusDisplay.className = 'mt-4 p-3 rounded-md bg-yellow-100 text-yellow-800 flex items-center';
+        }
+
+        function showScheduleModal() {
+            scheduleModal.classList.remove('hidden');
+        }
+
+        function hideScheduleModal() {
+            scheduleModal.classList.add('hidden');
+        }
+
+        function confirmDailySchedule() {
+            const time = document.getElementById('scheduleTime').value;
+            dailyGoal = parseInt(document.getElementById('dailyTarget').value) || 50;
+            
+            // In a real app, you would set up a scheduled task here
+            // For demo, we'll just show a success message
+            statusDisplay.innerHTML = `<i class="fas fa-check-circle mr-2"></i><span>Daily automation scheduled for ${time} (Mexico City time)</span>`;
+            statusDisplay.className = 'mt-4 p-3 rounded-md bg-green-100 text-green-800 flex items-center';
+            
+            saveData('schedule', { time, dailyGoal });
+            hideScheduleModal();
+        }
+
+        function updateUI() {
+            // Update progress
+            const progressPercentage = (currentApplications / dailyGoal) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+            progressText.textContent = `${currentApplications}/${dailyGoal} applications`;
+            
+            // Update counts
+            successCount.textContent = successfulApplications;
+            failedCount.textContent = failedApplications;
+            
+            // Update log table
+            logTableBody.innerHTML = '';
+            
+            if (applications.length === 0) {
+                logTableBody.innerHTML = `
+                    <tr class="log-entry">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No applications yet</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
+                    </tr>
+                `;
+            } else {
+                applications.forEach(app => {
+                    const statusClass = app.status === 'Applied' ? 'text-green-600' : 'text-red-600';
+                    const statusIcon = app.status === 'Applied' ? 'fa-check-circle' : 'fa-times-circle';
+                    
+                    logTableBody.innerHTML += `
+                        <tr class="log-entry hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.dateTime}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${app.company}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center">
+                                    ${getPlatformIcon(app.platform)}
+                                    ${app.platform}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass}">
+                                <i class="fas ${statusIcon} mr-1"></i> ${app.status}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function getPlatformIcon(platform) {
+            const icons = {
+                'LinkedIn': 'https://cdn-icons-png.flaticon.com/512/174/174857.png',
+                'Indeed': 'https://cdn-icons-png.flaticon.com/512/732/732246.png',
+                'Glassdoor': 'https://cdn-icons-png.flaticon.com/512/2111/2111435.png',
+                'Occmundial': 'https://www.occmundial.com/favicon.ico',
+                'Computrabajo': 'https://www.computrabajo.com/favicon.ico'
+            };
+            
+            return `<img src="${icons[platform] || 'https://cdn-icons-png.flaticon.com/512/1006/1006771.png'}" class="platform-icon">`;
+        }
+
+        function exportToExcel() {
+            if (applications.length === 0) {
+                alert('No applications to export');
+                return;
+            }
+            
+            // Prepare data
+            const data = [
+                ['Date/Time', 'Company', 'Platform', 'Status'], // Headers
+                ...applications.map(app => [app.dateTime, app.company, app.platform, app.status])
+            ];
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            XLSX.utils.book_append_sheet(wb, ws, 'Job Applications');
+            
+            // Export
+            XLSX.writeFile(wb, `Job_Applications_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function saveData(key, value) {
+            localStorage.setItem(`jobAutomator_${key}`, JSON.stringify(value));
+        }
+
+        function loadSavedData() {
+            // Load resume info
+            const resume = localStorage.getItem('jobAutomator_resume');
+            if (resume) {
+                resumeStatus.classList.remove('hidden');
+            }
+            
+            // Load applications
+            const savedApps = localStorage.getItem('jobAutomator_applications');
+            if (savedApps) {
+                applications = JSON.parse(savedApps);
+            }
+            
+            // Load stats
+            const savedStats = localStorage.getItem('jobAutomator_stats');
+            if (savedStats) {
+                const stats = JSON.parse(savedStats);
+                successfulApplications = stats.successful || 0;
+                failedApplications = stats.failed || 0;
+                currentApplications = stats.current || 0;
+            }
+            
+            // Load schedule
+            const savedSchedule = localStorage.getItem('jobAutomator_schedule');
+            if (savedSchedule) {
+                const schedule = JSON.parse(savedSchedule);
+                document.getElementById('scheduleTime').value = schedule.time || '09:00';
+                dailyGoal = schedule.dailyGoal || 50;
+                document.getElementById('dailyTarget').value = dailyGoal;
+            }
+        }
+    </script>
+</body>
+</html>
